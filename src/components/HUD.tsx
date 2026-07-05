@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/lib/game-store";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { touchControls } from "@/lib/touch-controls";
 import { useFullscreen } from "@/lib/use-fullscreen";
 
 export default function HUD() {
   const { score, highScore, combo, fuel, health, fps, state, setState, reset } = useGame();
-  const isMobile = useIsMobile();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
 
@@ -22,11 +20,9 @@ export default function HUD() {
           <div className="flex flex-col gap-3 w-64">
             <HeroButton onClick={() => { reset(); setState("playing"); }}>Start Game</HeroButton>
             <HeroButton variant="ghost" onClick={() => alert("WASD / Mouse to steer\nLeft click / J to shoot\nSpace to boost\nEsc to pause\n\nMobile: left half = joystick, right half = shoot, 3 fingers = boost")}>How to Play</HeroButton>
-            {isMobile && (
-              <HeroButton variant="ghost" onClick={toggleFullscreen}>
-                {isFullscreen ? "Exit Fullscreen" : "⛶ Fullscreen Mode"}
-              </HeroButton>
-            )}
+            <HeroButton variant="ghost" onClick={toggleFullscreen}>
+              {isFullscreen ? "Exit Fullscreen" : "⛶ Fullscreen Mode"}
+            </HeroButton>
           </div>
           <p className="mt-8 text-xs text-white/40">High Score: <span className="text-hero-accent font-bold">{Math.floor(highScore)}</span></p>
         </Panel>
@@ -108,27 +104,25 @@ export default function HUD() {
         ⏸ Pause
       </button>
 
-      {/* Fullscreen toggle (mobile) */}
-      {isMobile && (
-        <button
-          className="absolute bottom-4 right-28 pointer-events-auto glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
-          onClick={toggleFullscreen}
-          aria-label="Toggle fullscreen"
-        >
-          {isFullscreen ? "⛶" : "⛶"}
-        </button>
-      )}
+      {/* Fullscreen toggle */}
+      <button
+        className="absolute bottom-4 right-28 pointer-events-auto glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
+        onClick={toggleFullscreen}
+        aria-label="Toggle fullscreen"
+      >
+        {isFullscreen ? "⛶ Exit" : "⛶"}
+      </button>
 
       {/* FPS */}
       <div className="absolute bottom-4 left-4 text-[10px] text-white/40 font-mono">{fps} FPS</div>
 
-      {/* Mobile touch controls */}
-      {isMobile && <TouchControls />}
+      {/* On-screen controls — available on every device (mouse, touch, pen) */}
+      <OnScreenControls />
     </div>
   );
 }
 
-function TouchControls() {
+function OnScreenControls() {
   return (
     <>
       <Joystick />
@@ -159,13 +153,13 @@ function ActionButton({
 }) {
   return (
     <button
-      className={`pointer-events-auto select-none rounded-full font-black tracking-widest shadow-[0_0_20px_-2px_rgba(239,68,68,0.6)] border border-white/20 active:scale-95 transition ${className}`}
-      onTouchStart={(e) => { e.preventDefault(); onPress(true); }}
-      onTouchEnd={(e) => { e.preventDefault(); onPress(false); }}
-      onTouchCancel={() => onPress(false)}
-      onMouseDown={() => onPress(true)}
-      onMouseUp={() => onPress(false)}
-      onMouseLeave={() => onPress(false)}
+      className={`pointer-events-auto select-none rounded-full font-black tracking-widest shadow-[0_0_20px_-2px_rgba(239,68,68,0.6)] border border-white/20 active:scale-95 transition touch-none ${className}`}
+      style={{ touchAction: "none" }}
+      onPointerDown={(e) => { e.preventDefault(); (e.target as HTMLElement).setPointerCapture(e.pointerId); onPress(true); }}
+      onPointerUp={() => onPress(false)}
+      onPointerCancel={() => onPress(false)}
+      onPointerLeave={(e) => { if (e.buttons === 0) return; onPress(false); }}
+      onContextMenu={(e) => e.preventDefault()}
     >
       {label}
     </button>
@@ -205,19 +199,19 @@ function Joystick() {
   return (
     <div
       ref={baseRef}
-      className="absolute bottom-8 left-8 w-32 h-32 rounded-full bg-white/5 border border-white/20 backdrop-blur-sm pointer-events-auto touch-none"
-      onTouchStart={(e) => {
-        const t = e.changedTouches[0];
-        activeId.current = t.identifier;
-        update(t.clientX, t.clientY);
+      className="absolute bottom-8 left-8 w-32 h-32 rounded-full bg-white/5 border border-white/20 backdrop-blur-sm pointer-events-auto"
+      style={{ touchAction: "none" }}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        activeId.current = e.pointerId;
+        update(e.clientX, e.clientY);
       }}
-      onTouchMove={(e) => {
-        for (const t of Array.from(e.changedTouches)) {
-          if (t.identifier === activeId.current) update(t.clientX, t.clientY);
-        }
+      onPointerMove={(e) => {
+        if (activeId.current === e.pointerId) update(e.clientX, e.clientY);
       }}
-      onTouchEnd={reset}
-      onTouchCancel={reset}
+      onPointerUp={reset}
+      onPointerCancel={reset}
     >
       <div
         className="absolute top-1/2 left-1/2 w-14 h-14 -mt-7 -ml-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 border border-white/30 shadow-[0_0_20px_-2px_rgba(239,68,68,0.8)]"
