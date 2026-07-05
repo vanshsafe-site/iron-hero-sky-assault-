@@ -403,10 +403,10 @@ export default function GameCanvas() {
       // Thruster flicker
       player.traverse((o: any) => { if (o.userData?.thruster) o.scale.y = 0.7 + Math.random() * 0.6 + (boosting ? 0.8 : 0); });
 
-      // Camera follow
-      const camTarget = new THREE.Vector3(pPos.x * 0.3, pPos.y + 4, pPos.z + 16);
-      camera.position.lerp(camTarget, Math.min(1, dt * 4));
-      camera.lookAt(pPos.x * 0.5, pPos.y + 1, pPos.z - 10);
+      // Camera follow — tracks the hero's actual position (was scaled down before, causing drift)
+      const camTarget = new THREE.Vector3(pPos.x, pPos.y + 4, pPos.z + 16);
+      camera.position.lerp(camTarget, Math.min(1, dt * 5));
+      camera.lookAt(pPos.x, pPos.y + 1, pPos.z - 10);
       camera.fov = boosting ? 82 : 70;
       camera.updateProjectionMatrix();
       if (boosting) {
