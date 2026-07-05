@@ -6,7 +6,7 @@ import { gameAudio } from "@/lib/game-audio";
 
 export default function HUD() {
   const { score, highScore, combo, fuel, health, fps, state, setState, reset } = useGame();
-  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
+  const { toggle: toggleFullscreen } = useFullscreen();
   const [muted, setMuted] = useState(false);
 
   const toggleMusic = () => {
@@ -15,6 +15,26 @@ export default function HUD() {
     gameAudio.setMasterVolume(next ? 0 : 0.6);
   };
 
+  // Auto-enter fullscreen the moment the user first interacts with the page.
+  // Browsers require a genuine user gesture to grant fullscreen, so we can't
+  // do this purely on load — this listens for the very first click/tap/key
+  // anywhere and fires fullscreen right then, only once.
+  useEffect(() => {
+    let done = false;
+    const goFullscreen = () => {
+      if (done || document.fullscreenElement) return;
+      done = true;
+      toggleFullscreen();
+      window.removeEventListener("pointerdown", goFullscreen);
+      window.removeEventListener("keydown", goFullscreen);
+    };
+    window.addEventListener("pointerdown", goFullscreen, { once: true });
+    window.addEventListener("keydown", goFullscreen, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", goFullscreen);
+      window.removeEventListener("keydown", goFullscreen);
+    };
+  }, [toggleFullscreen]);
 
   if (state === "menu") {
     return (
@@ -28,9 +48,6 @@ export default function HUD() {
           <div className="flex flex-col gap-3 w-64">
             <HeroButton onClick={() => { gameAudio.init(); reset(); setState("playing"); }}>Start Game</HeroButton>
             <HeroButton variant="ghost" onClick={() => alert("WASD / Mouse to steer\nLeft click / J to shoot\nSpace to boost\nEsc to pause\n\nMobile: left half = joystick, right half = shoot, 3 fingers = boost")}>How to Play</HeroButton>
-            <HeroButton variant="ghost" onClick={toggleFullscreen}>
-              {isFullscreen ? "Exit Fullscreen" : "⛶ Fullscreen Mode"}
-            </HeroButton>
           </div>
           <p className="mt-8 text-xs text-white/40">High Score: <span className="text-hero-accent font-bold">{Math.floor(highScore)}</span></p>
         </Panel>
@@ -90,28 +107,14 @@ export default function HUD() {
         </div>
       </div>
 
-      {/* Pause / Music / Fullscreen — row below score board, top right, 4px gap */}
+      {/* Music toggle — row below score board, top right */}
       <div className="absolute top-[88px] right-4 flex gap-1 pointer-events-auto">
-        <button
-          className="glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
-          onClick={() => setState("paused")}
-          aria-label="Pause"
-        >
-          ⏸
-        </button>
         <button
           className="glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
           onClick={toggleMusic}
           aria-label="Toggle music"
         >
           {muted ? "🔇" : "🔊"}
-        </button>
-        <button
-          className="glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
-          onClick={toggleFullscreen}
-          aria-label="Toggle fullscreen"
-        >
-          {isFullscreen ? "⛶ Exit" : "⛶"}
         </button>
       </div>
 
