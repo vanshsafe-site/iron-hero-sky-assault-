@@ -2,21 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/lib/game-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { touchControls } from "@/lib/touch-controls";
-import { startMusic } from "@/lib/music";
+import { useFullscreen } from "@/lib/use-fullscreen";
 
 export default function HUD() {
   const { score, highScore, combo, fuel, health, fps, state, setState, reset } = useGame();
   const isMobile = useIsMobile();
-  const startedRef = useRef(false);
-
-  useEffect(() => {
-    // Attempt to autoplay music once when gameplay starts. Browsers
-    // may require a user gesture; starting the game counts as one.
-    if (state === "playing" && !startedRef.current) {
-      try { startMusic(); } catch {}
-      startedRef.current = true;
-    }
-  }, [state]);
+  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
 
   if (state === "menu") {
@@ -31,6 +22,11 @@ export default function HUD() {
           <div className="flex flex-col gap-3 w-64">
             <HeroButton onClick={() => { reset(); setState("playing"); }}>Start Game</HeroButton>
             <HeroButton variant="ghost" onClick={() => alert("WASD / Mouse to steer\nLeft click / J to shoot\nSpace to boost\nEsc to pause\n\nMobile: left half = joystick, right half = shoot, 3 fingers = boost")}>How to Play</HeroButton>
+            {isMobile && (
+              <HeroButton variant="ghost" onClick={toggleFullscreen}>
+                {isFullscreen ? "Exit Fullscreen" : "⛶ Fullscreen Mode"}
+              </HeroButton>
+            )}
           </div>
           <p className="mt-8 text-xs text-white/40">High Score: <span className="text-hero-accent font-bold">{Math.floor(highScore)}</span></p>
         </Panel>
@@ -81,19 +77,13 @@ export default function HUD() {
         <Bar label="ARMOR" value={health} color="from-rose-500 to-orange-400" />
       </div>
 
-      {/* Score + Pause */}
-      <div className="absolute top-4 right-4 text-right pointer-events-auto">
-        <div className="glass px-4 py-2 pointer-events-none">
+      {/* Score */}
+      <div className="absolute top-4 right-4 text-right pointer-events-none">
+        <div className="glass px-4 py-2">
           <div className="text-[10px] tracking-widest text-white/50">SCORE</div>
           <div className="text-2xl font-black text-hero-accent leading-none">{Math.floor(score)}</div>
           <div className="text-[10px] text-white/40 mt-1">BEST {Math.floor(highScore)}</div>
         </div>
-        <button
-          className="mt-[5px] pointer-events-auto glass px-3 py-1 text-xs font-semibold hover:text-hero-accent transition"
-          onClick={() => setState("paused")}
-        >
-          ⏸ Pause
-        </button>
       </div>
 
       {/* Combo */}
@@ -111,7 +101,23 @@ export default function HUD() {
       </div>
 
       {/* Pause */}
-      
+      <button
+        className="absolute bottom-4 right-4 pointer-events-auto glass px-4 py-2 text-sm font-semibold hover:text-hero-accent transition"
+        onClick={() => setState("paused")}
+      >
+        ⏸ Pause
+      </button>
+
+      {/* Fullscreen toggle (mobile) */}
+      {isMobile && (
+        <button
+          className="absolute bottom-4 right-28 pointer-events-auto glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
+          onClick={toggleFullscreen}
+          aria-label="Toggle fullscreen"
+        >
+          {isFullscreen ? "⛶" : "⛶"}
+        </button>
+      )}
 
       {/* FPS */}
       <div className="absolute bottom-4 left-4 text-[10px] text-white/40 font-mono">{fps} FPS</div>
@@ -239,7 +245,7 @@ function Panel({ children }: { children: React.ReactNode }) {
 }
 
 function HeroButton({ children, onClick, variant = "primary" }: { children: React.ReactNode; onClick: () => void; variant?: "primary" | "ghost" }) {
-  const base = "px-4 py-2 rounded-lg font-bold tracking-wide transition-all active:scale-95";
+  const base = "px-6 py-3 rounded-xl font-bold tracking-wide transition-all active:scale-95";
   const styles = variant === "primary"
     ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-[0_0_25px_-5px_rgba(239,68,68,0.7)] hover:shadow-[0_0_35px_-3px_rgba(239,68,68,0.9)] hover:from-red-500 hover:to-red-400"
     : "border border-white/15 text-white/80 hover:text-white hover:border-hero-accent/60 hover:bg-white/5";
