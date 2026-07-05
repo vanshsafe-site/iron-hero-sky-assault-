@@ -2,10 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/lib/game-store";
 import { touchControls } from "@/lib/touch-controls";
 import { useFullscreen } from "@/lib/use-fullscreen";
+import { gameAudio } from "@/lib/game-audio";
 
 export default function HUD() {
   const { score, highScore, combo, fuel, health, fps, state, setState, reset } = useGame();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
+  const [muted, setMuted] = useState(false);
+
+  const toggleMusic = () => {
+    const next = !muted;
+    setMuted(next);
+    gameAudio.setMasterVolume(next ? 0 : 0.6);
+  };
 
 
   if (state === "menu") {
@@ -18,7 +26,7 @@ export default function HUD() {
             Fly the armored hero through the city. Destroy drones, collect fuel, survive as long as possible.
           </p>
           <div className="flex flex-col gap-3 w-64">
-            <HeroButton onClick={() => { reset(); setState("playing"); }}>Start Game</HeroButton>
+            <HeroButton onClick={() => { gameAudio.init(); reset(); setState("playing"); }}>Start Game</HeroButton>
             <HeroButton variant="ghost" onClick={() => alert("WASD / Mouse to steer\nLeft click / J to shoot\nSpace to boost\nEsc to pause\n\nMobile: left half = joystick, right half = shoot, 3 fingers = boost")}>How to Play</HeroButton>
             <HeroButton variant="ghost" onClick={toggleFullscreen}>
               {isFullscreen ? "Exit Fullscreen" : "⛶ Fullscreen Mode"}
@@ -82,9 +90,34 @@ export default function HUD() {
         </div>
       </div>
 
+      {/* Pause / Music / Fullscreen — row below score board, top right, 4px gap */}
+      <div className="absolute top-[88px] right-4 flex gap-1 pointer-events-auto">
+        <button
+          className="glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
+          onClick={() => setState("paused")}
+          aria-label="Pause"
+        >
+          ⏸
+        </button>
+        <button
+          className="glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
+          onClick={toggleMusic}
+          aria-label="Toggle music"
+        >
+          {muted ? "🔇" : "🔊"}
+        </button>
+        <button
+          className="glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
+          onClick={toggleFullscreen}
+          aria-label="Toggle fullscreen"
+        >
+          {isFullscreen ? "⛶ Exit" : "⛶"}
+        </button>
+      </div>
+
       {/* Combo */}
       {combo > 1 && (
-        <div className="absolute top-32 right-4 glass px-3 py-1 text-right">
+        <div className="absolute top-36 right-4 glass px-3 py-1 text-right">
           <div className="text-[10px] tracking-widest text-white/50">COMBO</div>
           <div className="text-xl font-black text-hero">×{combo}</div>
         </div>
@@ -95,23 +128,6 @@ export default function HUD() {
         <div className="w-6 h-6 border-2 border-hero-accent/70 rounded-full" />
         <div className="absolute w-1 h-1 bg-hero-accent rounded-full" />
       </div>
-
-      {/* Pause */}
-      <button
-        className="absolute bottom-4 right-4 pointer-events-auto glass px-4 py-2 text-sm font-semibold hover:text-hero-accent transition"
-        onClick={() => setState("paused")}
-      >
-        ⏸ Pause
-      </button>
-
-      {/* Fullscreen toggle */}
-      <button
-        className="absolute bottom-4 right-28 pointer-events-auto glass px-3 py-2 text-sm font-semibold hover:text-hero-accent transition"
-        onClick={toggleFullscreen}
-        aria-label="Toggle fullscreen"
-      >
-        {isFullscreen ? "⛶ Exit" : "⛶"}
-      </button>
 
       {/* FPS */}
       <div className="absolute bottom-4 left-4 text-[10px] text-white/40 font-mono">{fps} FPS</div>
