@@ -81,22 +81,20 @@ export default function HUD() {
         <Bar label="ARMOR" value={health} color="from-rose-500 to-orange-400" />
       </div>
 
-      {/* Score */}
-      <div className="absolute top-4 right-4 text-right pointer-events-none">
-        <div className="glass px-4 py-2">
+      {/* Score + Pause */}
+      <div className="absolute top-4 right-4 text-right pointer-events-auto">
+        <div className="glass px-4 py-2 pointer-events-none">
           <div className="text-[10px] tracking-widest text-white/50">SCORE</div>
           <div className="text-2xl font-black text-hero-accent leading-none">{Math.floor(score)}</div>
           <div className="text-[10px] text-white/40 mt-1">BEST {Math.floor(highScore)}</div>
         </div>
+        <button
+          className="mt-[5px] pointer-events-auto glass px-3 py-1 text-xs font-semibold hover:text-hero-accent transition"
+          onClick={() => setState("paused")}
+        >
+          ⏸ Pause
+        </button>
       </div>
-
-      {/* Pause - placed under score */}
-      <button
-        className="absolute top-20 right-4 pointer-events-auto glass px-3 py-1 text-xs font-semibold hover:text-hero-accent transition"
-        onClick={() => setState("paused")}
-      >
-        ⏸ Pause
-      </button>
 
       {/* Combo */}
       {combo > 1 && (
