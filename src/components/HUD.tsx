@@ -90,6 +90,14 @@ export default function HUD() {
         </div>
       </div>
 
+      {/* Pause - placed under score */}
+      <button
+        className="absolute top-20 right-4 pointer-events-auto glass px-3 py-1 text-xs font-semibold hover:text-hero-accent transition"
+        onClick={() => setState("paused")}
+      >
+        ⏸ Pause
+      </button>
+
       {/* Combo */}
       {combo > 1 && (
         <div className="absolute top-32 right-4 glass px-3 py-1 text-right">
@@ -105,12 +113,7 @@ export default function HUD() {
       </div>
 
       {/* Pause */}
-      <button
-        className="absolute bottom-4 right-4 pointer-events-auto glass px-3 py-1 text-xs font-semibold hover:text-hero-accent transition"
-        onClick={() => setState("paused")}
-      >
-        ⏸ Pause
-      </button>
+      
 
       {/* FPS */}
       <div className="absolute bottom-4 left-4 text-[10px] text-white/40 font-mono">{fps} FPS</div>
