@@ -52,7 +52,7 @@ export function useFullscreen(targetRef?: React.RefObject<HTMLElement>) {
         const orientation = (screen as any).orientation;
         if (orientation?.lock) {
           try {
-            await orientation.lock("portrait");
+            await orientation.lock("landscape");
           } catch {
             /* not supported / not allowed — ignore */
           }
