@@ -2,19 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/lib/game-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { touchControls } from "@/lib/touch-controls";
-import { startMusic, stopMusic, isMusicPlaying } from "@/lib/music";
+import { startMusic } from "@/lib/music";
 
 export default function HUD() {
   const { score, highScore, combo, fuel, health, fps, state, setState, reset } = useGame();
   const isMobile = useIsMobile();
-  const [musicOn, setMusicOn] = useState(false);
+  const startedRef = useRef(false);
 
   useEffect(() => {
-    // start music only when enabled and gameplay is active
-    if (musicOn && state === "playing") startMusic();
-    else stopMusic();
-    return () => { stopMusic(); };
-  }, [musicOn, state]);
+    // Attempt to autoplay music once when gameplay starts. Browsers
+    // may require a user gesture; starting the game counts as one.
+    if (state === "playing" && !startedRef.current) {
+      try { startMusic(); } catch {}
+      startedRef.current = true;
+    }
+  }, [state]);
 
 
   if (state === "menu") {
@@ -104,18 +106,10 @@ export default function HUD() {
 
       {/* Pause */}
       <button
-        className="absolute bottom-4 right-4 pointer-events-auto glass px-4 py-2 text-sm font-semibold hover:text-hero-accent transition"
+        className="absolute bottom-4 right-4 pointer-events-auto glass px-3 py-1 text-xs font-semibold hover:text-hero-accent transition"
         onClick={() => setState("paused")}
       >
         ⏸ Pause
-      </button>
-
-      {/* Music toggle */}
-      <button
-        className="absolute bottom-16 right-4 pointer-events-auto glass px-4 py-2 text-sm font-semibold hover:text-hero-accent transition"
-        onClick={() => setMusicOn((s) => !s)}
-      >
-        {musicOn ? "🔊 Music On" : "🔈 Music Off"}
       </button>
 
       {/* FPS */}
@@ -244,7 +238,7 @@ function Panel({ children }: { children: React.ReactNode }) {
 }
 
 function HeroButton({ children, onClick, variant = "primary" }: { children: React.ReactNode; onClick: () => void; variant?: "primary" | "ghost" }) {
-  const base = "px-6 py-3 rounded-xl font-bold tracking-wide transition-all active:scale-95";
+  const base = "px-4 py-2 rounded-lg font-bold tracking-wide transition-all active:scale-95";
   const styles = variant === "primary"
     ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-[0_0_25px_-5px_rgba(239,68,68,0.7)] hover:shadow-[0_0_35px_-3px_rgba(239,68,68,0.9)] hover:from-red-500 hover:to-red-400"
     : "border border-white/15 text-white/80 hover:text-white hover:border-hero-accent/60 hover:bg-white/5";
